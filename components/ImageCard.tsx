@@ -1,4 +1,14 @@
-import type { ImageFile } from "@/types/image";
+type ImageFile = {
+  id: string;
+  name: string;
+  size: string;
+  status: "pending" | "processing" | "done" | "error";
+  progress: number;
+  step: number;
+  originalUrl: string;
+  processedUrl?: string;
+  file: File;
+};
 
 const STEP_LABELS = ["Removing BG", "White Background", "Resizing"];
 
