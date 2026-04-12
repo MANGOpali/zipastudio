@@ -1,4 +1,5 @@
 "use client";
+
 import { useState } from "react";
 import UploadZone from "@/components/UploadZone";
 import ImageCard from "@/components/ImageCard";
@@ -100,14 +101,16 @@ export default function Home() {
     <div className="min-h-screen bg-[#120811] text-white">
       <TopBar processingCount={processingCount} />
 
-      <div className="flex h-[calc(100vh-57px)]">
-        <aside className="w-[300px] bg-[#1a0d17] border-r border-[#dc136c]/20 p-5 flex flex-col gap-5 overflow-y-auto shadow-[0_0_40px_rgba(220,19,108,0.08)]">
+      <div className="flex flex-col lg:flex-row min-h-[calc(100vh-57px)]">
+        <aside className="w-full lg:w-[300px] xl:w-[320px] bg-[#1a0d17] border-b lg:border-b-0 lg:border-r border-[#dc136c]/20 p-4 sm:p-5 flex flex-col gap-4 sm:gap-5 shadow-[0_0_40px_rgba(220,19,108,0.08)] lg:sticky lg:top-[57px] lg:h-[calc(100vh-57px)] overflow-y-auto">
           <div className="rounded-2xl border border-[#dc136c]/20 bg-gradient-to-br from-[#2a1020] to-[#160b14] p-4">
             <p className="text-[10px] font-mono text-[#f4a8cb]/60 tracking-[1.6px] uppercase mb-2">
               Brand Mode
             </p>
-            <h2 className="text-lg font-bold text-white">Zipa Vendor Studio</h2>
-            <p className="text-sm text-white/60 mt-1 leading-relaxed">
+            <h2 className="text-base sm:text-lg font-bold text-white">
+              Zipa Vendor Studio
+            </h2>
+            <p className="text-xs sm:text-sm text-white/60 mt-1 leading-relaxed">
               Pure white background, square format, clean product output for
               e-commerce listings.
             </p>
@@ -133,7 +136,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-3">
             {[
               { label: "Total", val: images.length, color: "text-white" },
               { label: "Done", val: doneCount, color: "text-[#ff8bc0]" },
@@ -144,7 +147,7 @@ export default function Home() {
                 key={s.label}
                 className="rounded-2xl border border-[#dc136c]/15 bg-[#21101b] p-3"
               >
-                <div className={`font-mono text-2xl font-semibold ${s.color}`}>
+                <div className={`font-mono text-xl sm:text-2xl font-semibold ${s.color}`}>
                   {s.val}
                 </div>
                 <div className="text-[10px] text-[#f4a8cb]/55 mt-1 tracking-[1.2px]">
@@ -161,7 +164,7 @@ export default function Home() {
             </span>
           </div>
 
-          <div className="flex flex-col gap-3 mt-auto">
+          <div className="flex flex-col sm:flex-row lg:flex-col gap-3 mt-1 lg:mt-auto">
             <button
               onClick={processAll}
               disabled={images.length === 0 || isProcessing}
@@ -180,28 +183,32 @@ export default function Home() {
           </div>
         </aside>
 
-        <main className="flex-1 overflow-y-auto p-6 bg-[radial-gradient(circle_at_top_right,rgba(220,19,108,0.08),transparent_28%),linear-gradient(to_bottom,#120811,#0f0710)]">
-          <div className="mb-6">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-[radial-gradient(circle_at_top_right,rgba(220,19,108,0.08),transparent_28%),linear-gradient(to_bottom,#120811,#0f0710)]">
+          <div className="mb-5 sm:mb-6">
             <p className="text-[11px] uppercase tracking-[2px] text-[#f4a8cb]/60 font-mono mb-2">
               Dashboard
             </p>
-            <h1 className="text-2xl font-bold">Zipa Product Image Processor</h1>
-            <p className="text-white/55 text-sm mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold">
+              Zipa Product Image Processor
+            </h1>
+            <p className="text-white/55 text-sm mt-1 max-w-2xl">
               Upload vendor product photos and convert them into clean listing
               images with a white background.
             </p>
           </div>
 
           {images.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-[420px] rounded-3xl border border-dashed border-[#dc136c]/20 bg-[#170b14] text-white/35">
-              <div className="text-5xl mb-4">👜</div>
-              <p className="font-semibold text-base">No products uploaded yet</p>
-              <p className="text-sm mt-2 text-white/40">
-                Add product images from the left panel to start processing
+            <div className="flex flex-col items-center justify-center min-h-[280px] sm:min-h-[420px] rounded-3xl border border-dashed border-[#dc136c]/20 bg-[#170b14] text-white/35 px-6 text-center">
+              <div className="text-4xl sm:text-5xl mb-4">👜</div>
+              <p className="font-semibold text-base sm:text-lg">
+                No products uploaded yet
+              </p>
+              <p className="text-sm mt-2 text-white/40 max-w-md">
+                Add product images from the upload section to start processing
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
               {images.map((img) => (
                 <div
                   key={img.id}
