@@ -20,6 +20,7 @@ export type ImageFile = {
 export default function Home() {
   const [images, setImages] = useState<ImageFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [useAiEnhance, setUseAiEnhance] = useState(false);
 
   function handleFilesAdded(files: File[]) {
     const newImages: ImageFile[] = files.map((file) => ({
@@ -50,7 +51,9 @@ export default function Home() {
 
     for (let i = 0; i < pending.length; i += 3) {
       const batch = pending.slice(i, i + 3);
-      await Promise.all(batch.map((img) => processSingleImage(img, updateImage)));
+      await Promise.all(
+        batch.map((img) => processSingleImage(img, updateImage, useAiEnhance))
+      );
     }
 
     setIsProcessing(false);
@@ -134,6 +137,50 @@ export default function Home() {
               <div>• E-commerce ready output</div>
               <div>• No lifestyle background</div>
             </div>
+          </div>
+
+          <div className="rounded-2xl border border-[#dc136c]/15 bg-[#21101b] p-4">
+            <p className="text-[10px] font-mono text-[#f4a8cb]/60 tracking-[1.6px] uppercase mb-3">
+              AI Enhancement
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setUseAiEnhance((prev) => !prev)}
+              className={`w-full rounded-2xl border px-4 py-3 text-left transition-all ${
+                useAiEnhance
+                  ? "bg-[#dc136c]/15 border-[#dc136c]/30 text-white"
+                  : "bg-[#180c15] border-white/10 text-white/60"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold">
+                    {useAiEnhance ? "AI Enhance On" : "AI Enhance Off"}
+                  </p>
+                  <p className="text-[11px] mt-1 text-white/50">
+                    Tries wrinkle reduction and straightening first.
+                  </p>
+                </div>
+
+                <div
+                  className={`relative h-6 w-11 rounded-full transition-colors ${
+                    useAiEnhance ? "bg-[#dc136c]" : "bg-white/15"
+                  }`}
+                >
+                  <div
+                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${
+                      useAiEnhance ? "left-[22px]" : "left-0.5"
+                    }`}
+                  />
+                </div>
+              </div>
+            </button>
+
+            <p className="text-[10px] text-white/35 mt-3 leading-relaxed">
+              If OpenAI is unavailable, the app will automatically fall back to
+              standard remove background + white background processing.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-3">
@@ -227,27 +274,46 @@ export default function Home() {
 
 async function processSingleImage(
   img: ImageFile,
-  update: (id: string, changes: Partial<ImageFile>) => void
+  update: (id: string, changes: Partial<ImageFile>) => void,
+  useAiEnhance: boolean
 ) {
   update(img.id, { status: "processing", progress: 5, step: 0 });
 
   try {
-    update(img.id, { step: 0, progress: 10 });
-    const removedBgUrl = await callRemoveBg(img.file);
+    let finalUrl: string;
 
-    update(img.id, { step: 0, progress: 40 });
-    update(img.id, { step: 1, progress: 50 });
+    if (useAiEnhance) {
+      try {
+        update(img.id, { step: 0, progress: 15 });
+        const editedUrl = await callOpenAIEdit(img.file);
 
-    const withBgUrl = await callCloudinary(removedBgUrl);
+        update(img.id, { step: 1, progress: 65 });
+        finalUrl = await callCloudinary(editedUrl);
+      } catch (openAiErr) {
+        console.warn(
+          "OpenAI failed, falling back to remove.bg + Cloudinary",
+          openAiErr
+        );
 
-    update(img.id, { step: 1, progress: 80 });
-    update(img.id, { step: 2, progress: 90 });
+        update(img.id, { step: 0, progress: 35 });
+        const removedBgUrl = await callRemoveBg(img.file);
+
+        update(img.id, { step: 1, progress: 75 });
+        finalUrl = await callCloudinary(removedBgUrl);
+      }
+    } else {
+      update(img.id, { step: 0, progress: 35 });
+      const removedBgUrl = await callRemoveBg(img.file);
+
+      update(img.id, { step: 1, progress: 75 });
+      finalUrl = await callCloudinary(removedBgUrl);
+    }
 
     update(img.id, {
       status: "done",
       progress: 100,
       step: 3,
-      processedUrl: withBgUrl,
+      processedUrl: finalUrl,
     });
   } catch (err) {
     update(img.id, { status: "error", progress: 0 });
@@ -284,6 +350,24 @@ async function callCloudinary(imageUrl: string): Promise<string> {
 
   if (!res.ok) {
     throw new Error(data.details || data.error || "cloudinary failed");
+  }
+
+  return data.resultUrl;
+}
+
+async function callOpenAIEdit(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch("/api/openai-edit", {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error || "OpenAI edit failed");
   }
 
   return data.resultUrl;

@@ -9,45 +9,36 @@ cloudinary.config({
 
 export async function POST(req: NextRequest) {
   try {
-    const { imageUrl, mode } = await req.json();
+    const { imageUrl } = await req.json();
 
     if (!imageUrl) {
       return Response.json({ error: "Missing imageUrl" }, { status: 400 });
     }
 
-    const isZipaWhite = mode === "zipa-white";
-
-    const transformation = isZipaWhite
-      ? {
-          width: 2000,
-          height: 2000,
-          crop: "pad",
-          background: "white",
-          format: "png",
-        }
-      : {
-          width: 2000,
-          height: 2000,
-          crop: "pad",
-          background: "white",
-          format: "png",
-        };
-
     const uploaded = await cloudinary.uploader.upload(imageUrl, {
       folder: "imageforge",
-      eager: [transformation],
-      eager_async: false,
+      resource_type: "image",
     });
 
-    const resultUrl = uploaded?.eager?.[0]?.secure_url;
-
-    if (!resultUrl) {
-      console.error("Cloudinary: no transformed image returned", uploaded);
-      return Response.json(
-        { error: "No transformed image returned" },
-        { status: 500 }
-      );
+    if (!uploaded?.public_id) {
+      return Response.json({ error: "Upload failed" }, { status: 500 });
     }
+
+    const resultUrl = cloudinary.url(uploaded.public_id, {
+      transformation: [
+        {
+          width: 2000,
+          height: 2000,
+          crop: "pad",
+          background: "white",
+          gravity: "center",
+        },
+        {
+          format: "png",
+        },
+      ],
+      secure: true,
+    });
 
     return Response.json({ resultUrl });
   } catch (err: any) {
